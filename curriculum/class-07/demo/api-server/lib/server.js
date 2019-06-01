@@ -4,85 +4,68 @@ const express = require('express');
 
 const app = express();
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3003;
 
-const schema = ['id', 'name', 'title', 'author', 'article'];
-let db = [];
+const schema = {
+  name: 'string',
+  id: 'number',
+  hasDog: 'boolean',
+};
+const db = [];
 
+// takes in requests and parses JSON to req.body
 app.use(express.json());
 
-app.use( express.static('./public') );
-
-app.use( (req,res,next) => {
-  console.log('LOG:', req.method, req.path);
-  next();
-});
-
-let messager = (req,res,next) => {
-  console.log('send this to the queue!');
+const logger = (req, res, next) => {
+  console.log('LOG ', req.method, req.path);
   next();
 };
 
-// Swagger Docs
-const swaggerDocs = require(`./docs/config/swagger.json`);
-app.use('/docs/api', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
+app.use(logger);
 
-app.get('/posts', (req,res,next) => {
-  let count = db.length;
-  let results = db;
-  res.json({count,results});
+const checkBody = (req, res, next) => {
+  const {body} = req;
+
+  const keysArray = Object.keys(schema);
+
+  let hasKeys = keysArray.every(key => {
+    console.log(body.hasOwnProperty(key));
+    return body.hasOwnProperty(key);
+  });
+
+  if(hasKeys && Object.keys(body).length === keysArray.length) {
+    console.log('has the same keys');
+    next();
+  } else {
+    console.llg('has different keys');
+    next('you did not match the schema');
+  }
+
+  const errorHandler = (err, req, res, next) => {
+    res.status(400).send(err);
+  };
+};
+
+app.use(checkBody);
+if (body.hasOwnProperty)
+
+app.get('/things', (req, res) => {
+  res.status(200);
+  res.send(db);
 });
 
-app.get('/posts/:id', (req,res,next) => {
-  let id = req.params.id;
-  let record = db.filter((record) => record.id === parseInt(id));
-  res.json(record[0]);
-});
-
-
-app.post('/posts', messager, (req,res,next) => {
-  let {name,author,title,article} = req.body;
-  let record = {name,author,title,article};
-  record.id = db.length + 1;
+app.post('/things', (req, res) => {
+  const record = {...req.body};
+  record.id = db.length ? db[db.length - 1].id + 1 : 1;
   db.push(record);
-  res.json(record);
+  res.status(201).send(record);
 });
 
-app.put('/posts/:id', messager, (req,res,next) => {
-  let id = req.params.id;
-  let {name,author,title,article} = req.body;
-  let updatedRecord = {name,author,title,article};
-  db = db.map( (record) => (record.id === parseInt(id)) ? updatedRecord : record );
-  res.json(updatedRecord);
-});
 
-app.delete('/posts/:id', messager, (req,res,next) => {
-  let id = req.params.id;
-  db = db.filter( (record) => record.id !== parseInt(id) );
-  res.json({});
-});
+// Error handling must go at the end
 
-app.get('/foo', (req,res,next) => {
-  next('no idea what to do here ...');
-});
-
-app.use('*', (req,res) => {
-  res.status(404);
-  res.statusMessage = 'Resource Not Found';
-  res.json({error:'Not Found'});
-});
-
-app.use((error, req, res, next) => {
-  res.status(500);
-  res.statusMessage = 'Server Error';
-  res.json({error:error});
-});
-
-module.exports = {
-  server: app,
-  start: port => {
-    let PORT = port || process.env.PORT || 8080;
-    app.listen(PORT, () => console.log(`Listening on ${PORT}`));
-  },
+module.exports = exports = {
+  start: (PORT) => {
+    app.listen(PORT, () => {console.log(`up on port ${PORT}`)});
+  }
 };
-

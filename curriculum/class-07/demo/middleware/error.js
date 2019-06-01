@@ -17,6 +17,7 @@
  */
 module.exports = (err,req,res,next) => {
   console.log('In the error handler');
+  console.log(err);
   res.status(500);
-  res.send('WTF?');
+  res.send(err);
 };

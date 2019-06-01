@@ -1,6 +1,8 @@
 'use strict';
 
 const fs = require('fs');
+const os = require('os');
+console.log(os.endianness());
 
 // NO, you may not read synchronosly ... this is only for expedience in the demo
 const buffer = fs.readFileSync(`${__dirname}/baldy.bmp`);
